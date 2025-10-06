@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  overflow: hidden;
+  background-color: #000;
+  color: #00ff99;
+  font-family: "Fira Code", monospace;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Subtle green glow borders */
+.border-green-700 {
+  box-shadow: 0 0 10px rgba(0, 255, 100, 0.1);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #16a34a;
+  border-radius: 10px;
+}
