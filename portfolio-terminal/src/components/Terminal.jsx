@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { terminalData } from "../assets/assets";
+import { projects, certificates } from "../assets/assets";
 
-export default function Terminal() {
+export default function Terminal({ onCommand }) {
   const terminalRef = useRef(null);
   const [lines, setLines] = useState(["Type 'help' to get started..."]);
   const [input, setInput] = useState("");
@@ -15,27 +15,56 @@ export default function Terminal() {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const typingRef = useRef(null);
 
-  // === Utility: Format URLs ===
-  const formatText = (text) => {
-    const urlRegex = /\[https?:\/\/(.*?)\]/g;
-    return text.replace(urlRegex, (match) => {
-      const url = match.slice(1, -1);
-      const name = url.replace(/^https?:\/\//, "").replace(/\/$/, "");
-      return `<a href="${url}" target="_blank" class="text-blue-400 underline">${name}</a>`;
-    });
+  // === Helper: scroll instantly or smoothly to bottom ===
+  const scrollToBottom = (smooth = false) => {
+    const container = terminalRef.current;
+    if (!container) return;
+    if (smooth && "scrollTo" in container) {
+      try {
+        container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+      } catch {
+        // fallback
+        container.scrollTop = container.scrollHeight;
+      }
+    } else {
+      container.scrollTop = container.scrollHeight;
+    }
   };
 
-  // === Command Lists ===
-  const projectList = terminalData.projects
-    .map(
-      (p, i) =>
-        `${i + 1}. ${p.title}${
-          p.demo ? ` - [${p.demo}]` : p.github ? ` - [${p.github}]` : ""
-        }`
-    )
-    .join("\n");
+  // === Utility: Format URLs ===
+// === Utility: Format URLs ===
+// === Utility: Format URLs and replace them with "Link" ===
+// === Utility: Format URLs and replace them with "Link" ===
+const formatText = (text) => {
+  // Match only full valid URLs starting with http(s) or www
+  const urlRegex =
+    /\b((?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,;!?)]*)/gi;
 
-  const certificateList = terminalData.certificates
+  return text.replace(urlRegex, (url) => {
+    let href = url.startsWith("http") ? url : "https://" + url;
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-400 underline">Link</a>`;
+  });
+};
+
+
+
+
+  // === Command Lists ===
+const projectList = projects
+  .map(
+    (p, i) =>
+      `${i + 1}. ${p.title}${
+        p.demo
+          ? ` - ${p.demo}`
+          : p.github
+          ? ` - ${p.github}`
+          : ""
+      }`
+  )
+  .join("\n");
+
+
+  const certificateList = certificates
     .map((c, i) => `${i + 1}. ${c.title}${c.link ? ` - ${c.link}` : ""}`)
     .join("\n");
 
@@ -45,7 +74,7 @@ export default function Terminal() {
       "Available commands:\n- about\n- projects\n- skills\n- experience\n- education\n- certifications\n- contact\n- resume\n- clear",
     sudo: "Hello!👋 I'm Shigivahan Athithan",
     about:
-      "Hello!👋 I'm Shigivahan Athithan, a Full Stack Developer and Data Science Enthusiast.\n\nI enjoy designing intelligent, user-friendly applications and leveraging data to solve complex problems in real-world domains like healthcare, finance, and education.\n\nWith hands-on experience in React, Node.js, Python, TensorFlow, and SQL, I have built projects ranging from machine learning research published in IEEE/Scopus to hackathon-winning web apps.\n\nBeyond coding, I love exploring new technologies, contributing to open source, and constantly challenging myself to grow as a developer and analyst.\n\n",
+      "Hello!👋 I'm Shigivahan Athithan, a Full Stack Developer and Data Science Enthusiast.\n\n \n\nI enjoy designing intelligent, user-friendly applications and leveraging data to solve complex problems in real-world domains like healthcare, finance, and education.\n\n \n\nWith hands-on experience in React, Node.js, Python, TensorFlow, and SQL, I have built projects ranging from machine learning research published in IEEE/Scopus to hackathon-winning web apps.\n\n \n\nBeyond coding, I love exploring new technologies, contributing to open source, and constantly challenging myself to grow as a developer and analyst.\n\n",
     projects: projectList,
     skills:
       "\n- React\n- Next.js\n- Tailwind\n- CSS\n- Node.js\n- Express.js\n- MongoDB\n- Python\n- TensorFlow\n- Power BI\n- Framer Motion\n- Git\n- Figma\n",
@@ -63,68 +92,92 @@ export default function Terminal() {
 • Percentage: 85.7",
     certifications: certificateList,
     contact:
-      "📫 Get In Touch:\n\nEmail: shigivahanathithan@gmail.com\nPhone: +91 93447-18155\nGitHub: [https://github.com/ShigivahanA]\nLinkedIn: [https://linkedin.com/in/shigivahana]\n\nFeel free to reach out!",
+      "📫 Get In Touch:\n\n \n\nEmail: shigivahanathithan@gmail.com\nPhone: +91 93447-18155\nGitHub: [https://github.com/ShigivahanA]\nLinkedIn: [https://linkedin.com/in/shigivahana]\n\n \n\nFeel free to reach out!",
     clear: "clear",
   };
 
   // === Handle Resume Command ===
-const handleResumeDownload = () => {
-  const resumeURL = "/Shigivahan_Resume.pdf"; 
+  const handleResumeDownload = () => {
+    const resumeURL = "/Shigivahan_Resume.pdf";
 
-  const promptLine = `<span class='text-blue-400'>shigi@portfolio:~$</span> <span class='text-green-400'>resume</span>`;
-  setLines((prev) => [...prev, promptLine, "Downloading resume.pdf ..."]);
+    const promptLine = `<span class='text-blue-400'>shigi@portfolio:~$</span> <span class='text-green-400'>resume</span>`;
+    setLines((prev) => {
+      const next = [...prev, promptLine, "Downloading resume.pdf ..."];
+      // ensure we scroll after pushing lines
+      requestAnimationFrame(() => scrollToBottom(true));
+      return next;
+    });
 
-  // Fake countdown
-  let countdown = 3;
-  const countdownInterval = setInterval(() => {
-    setLines((prev) => [...prev, `Downloading in ${countdown}...`]);
-    countdown--;
-    if (countdown === 0) {
-      clearInterval(countdownInterval);
+    // Fake countdown
+    let countdown = 3;
+    const countdownInterval = setInterval(() => {
+      setLines((prev) => {
+        const next = [...prev, `Downloading in ${countdown}...`];
+        requestAnimationFrame(() => scrollToBottom(true));
+        return next;
+      });
+      countdown--;
+      if (countdown === 0) {
+        clearInterval(countdownInterval);
 
-      // === Start fake progress bar ===
-      let progress = 0;
-      const totalSteps = 20;
-      const progressInterval = setInterval(() => {
-        progress++;
-        const bar =
-          "[" +
-          "#".repeat(progress) +
-          "-".repeat(totalSteps - progress) +
-          `] ${(progress * 5)}%`;
-        setLines((prev) => [...prev, bar]);
+        // === Start fake progress bar ===
+        let progress = 0;
+        const totalSteps = 20;
+        const progressInterval = setInterval(() => {
+          progress++;
+          const bar =
+            "[" +
+            "#".repeat(progress) +
+            "-".repeat(totalSteps - progress) +
+            `] ${(progress * 5)}%`;
+          setLines((prev) => {
+            const next = [...prev, bar];
+            requestAnimationFrame(() => scrollToBottom(true));
+            return next;
+          });
 
-        if (progress >= totalSteps) {
-          clearInterval(progressInterval);
+          if (progress >= totalSteps) {
+            clearInterval(progressInterval);
 
-          // Trigger actual download
-          const link = document.createElement("a");
-          link.href = resumeURL;
-          link.download = "Shigivahan_Resume.pdf";
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+            // Trigger actual download
+            const link = document.createElement("a");
+            link.href = resumeURL;
+            link.download = "Shigivahan_Resume.pdf";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-          // Fake stats for realism
-          const fileSize = (Math.random() * 1.5 + 1.5).toFixed(2); // 1.5–3MB
-          const duration = (Math.random() * 1.2 + 0.8).toFixed(2); // 0.8–2s
+            // Fake stats
+            const fileSize = (Math.random() * 1.5 + 1.5).toFixed(2);
+            const duration = (Math.random() * 1.2 + 0.8).toFixed(2);
 
-          setTimeout(() => {
-            setLines((prev) => [
-              ...prev,
-              `<span class='text-green-400'>Successfully downloaded resume.pdf (${fileSize} MB in ${duration}s)</span>`,
-            ]);
-            setShowPrompt(true);
-          }, 800);
-        }
-      }, 100); // progress speed
-    }
-  }, 800);
-};
+            setTimeout(() => {
+              setLines((prev) => {
+                const next = [
+                  ...prev,
+                  `<span class='text-green-400'>Successfully downloaded resume.pdf (${fileSize} MB in ${duration}s)</span>`,
+                ];
+                requestAnimationFrame(() => scrollToBottom(true));
+                return next;
+              });
+              setShowPrompt(true);
+            }, 800);
+          }
+        }, 100);
+      }
+    }, 800);
+  };
 
   // === Handle Commands ===
   const handleCommand = (cmd) => {
     const lower = cmd.toLowerCase();
+
+    // Notify parent (for PreviewPanel)
+    if (["projects", "certifications"].includes(lower)) {
+      onCommand?.(lower);
+    } else {
+      onCommand?.(null);
+    }
 
     if (lower === "resume") {
       setShowPrompt(false);
@@ -136,18 +189,25 @@ const handleResumeDownload = () => {
       setLines([]);
       setHistory([...history, cmd]);
       setHistoryIndex(-1);
+      onCommand?.(null);
+      // ensure we keep prompt visible
+      requestAnimationFrame(() => scrollToBottom(true));
       return;
     }
 
     const output = commands[lower] || `Command not found: ${cmd}`;
     const promptLine = `<span class='text-blue-400'>shigi@portfolio:~$</span> <span class='text-green-400'>${cmd}</span>`;
-    setLines((prev) => [...prev, promptLine]);
+    setLines((prev) => {
+      const next = [...prev, promptLine];
+      requestAnimationFrame(() => scrollToBottom(true));
+      return next;
+    });
     setHistory([...history, cmd]);
     setHistoryIndex(-1);
     startTyping(output);
   };
 
-  // === Start typing ===
+  // === Typing logic ===
   const startTyping = (text) => {
     const linesArray = text.split("\n");
     setFullLines(linesArray);
@@ -157,7 +217,6 @@ const handleResumeDownload = () => {
     setShowPrompt(false);
   };
 
-  // === Typing effect ===
   useEffect(() => {
     if (!isTyping || fullLines.length === 0) return;
 
@@ -165,24 +224,46 @@ const handleResumeDownload = () => {
     let index = 0;
     let current = "";
 
+    // Clear existing interval if any
+    if (typingRef.current) clearInterval(typingRef.current);
+
     typingRef.current = setInterval(() => {
+      // Add next char
       current += line.charAt(index);
       setTypedText(current);
+
+      // scroll immediately (sync with painting)
+      requestAnimationFrame(() => scrollToBottom(false));
+
       index++;
 
+      // end of line
       if (index >= line.length) {
         clearInterval(typingRef.current);
         typingRef.current = null;
-        setLines((prev) => [...prev, current]);
 
+        // push the fully-typed line into lines
+        setLines((prev) => {
+          const next = [...prev, current];
+          // format link after a small delay (keeps typing effect fluid)
+          setTimeout(() => {
+            const formatted = formatText(current);
+            setLines((prev2) => {
+              const updated = [...prev2];
+              updated[updated.length - 1] = formatted;
+              // ensure we scroll after format
+              requestAnimationFrame(() => scrollToBottom(true));
+              return updated;
+            });
+          }, 200);
+
+          // scroll right away after adding the raw line
+          requestAnimationFrame(() => scrollToBottom(true));
+          return next;
+        });
+
+        // move to next line or finish
         setTimeout(() => {
-          const formatted = formatText(current);
-          setLines((prev) => {
-            const updated = [...prev];
-            updated[updated.length - 1] = formatted;
-            return updated;
-          });
-
           if (currentLineIndex < fullLines.length - 1) {
             setTypedText("");
             setCurrentLineIndex((i) => i + 1);
@@ -192,14 +273,14 @@ const handleResumeDownload = () => {
             setFullLines([]);
             setTimeout(() => setShowPrompt(true), 250);
           }
-        }, 200);
+        }, 220);
       }
     }, 25);
 
     return () => clearInterval(typingRef.current);
   }, [isTyping, currentLineIndex, fullLines]);
 
-  // === Ctrl + C interruption ===
+  // === Ctrl + C Interrupt ===
   useEffect(() => {
     const handleCtrlC = (e) => {
       if (e.ctrlKey && e.key === "c") {
@@ -210,13 +291,16 @@ const handleResumeDownload = () => {
           setIsTyping(false);
           setTypedText("");
           setFullLines([]);
-
           const pid = Math.floor(Math.random() * 4000) + 1000;
-          setLines((prev) => [
-            ...prev,
-            "^C",
-            `<span class='text-gray-500'>Terminated process (pid: ${pid})</span>`,
-          ]);
+          setLines((prev) => {
+            const next = [
+              ...prev,
+              "^C",
+              `<span class='text-gray-500'>Terminated process (pid: ${pid})</span>`,
+            ];
+            requestAnimationFrame(() => scrollToBottom(true));
+            return next;
+          });
           setTimeout(() => setShowPrompt(true), 400);
         }
       }
@@ -234,7 +318,7 @@ const handleResumeDownload = () => {
     setInput("");
   };
 
-  // === Arrow Navigation ===
+  // === History Navigation ===
   const handleKeyDown = (e) => {
     if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -255,21 +339,22 @@ const handleResumeDownload = () => {
     }
   };
 
-  // === Smooth Scroll ===
+  // === Ensure container is visible on mount / whenever lines change (fallback) ===
   useEffect(() => {
-    if (terminalRef.current) {
-      terminalRef.current.scrollTo({
-        top: terminalRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [lines, typedText]);
+    scrollToBottom(true);
+  }, [lines.length]);
 
   return (
     <motion.div
       ref={terminalRef}
       className="bg-black border border-green-700 p-3 md:p-4 rounded-lg w-full h-full overflow-y-auto shadow-inner 
+                 text-[13.5px] sm:text-[14px] md:text-[16px]
+                 overflow-x-hidden select-text
                  [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      style={{
+        whiteSpace: "pre-wrap",
+        WebkitOverflowScrolling: "touch", // helps iOS momentum
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
@@ -277,77 +362,68 @@ const handleResumeDownload = () => {
       {lines.map((line, i) => (
         <p
           key={i}
-          className="whitespace-pre-wrap text-white mb-1 leading-relaxed"
+          className="text-white mb-1 leading-relaxed break-words whitespace-pre-wrap"
+          style={{
+            wordWrap: "break-word",
+            overflowWrap: "anywhere",
+          }}
           dangerouslySetInnerHTML={{ __html: line }}
         />
       ))}
 
-      {isTyping && !lines.includes(typedText) && (
+      {isTyping && typedText && !lines.includes(typedText) && (
         <p
-          className="whitespace-pre-wrap text-white mb-1 leading-relaxed"
+          className="text-white mb-1 leading-relaxed break-words whitespace-pre-wrap"
+          style={{
+            wordWrap: "break-word",
+            overflowWrap: "anywhere",
+          }}
           dangerouslySetInnerHTML={{ __html: typedText }}
         />
       )}
 
-{showPrompt && !isTyping && (
-  <form
-    onSubmit={handleSubmit}
-    onKeyDown={(e) => {
-      handleKeyDown(e);
+      {showPrompt && !isTyping && (
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            // history navigation handled separately
+            handleKeyDown(e);
 
-      // === TAB Autocomplete (Bash-like) ===
-      if (e.key === "Tab") {
-        e.preventDefault(); // prevent browser focus change
-        const matches = Object.keys(commands).filter((cmd) =>
-          cmd.startsWith(input.toLowerCase())
-        );
-
-        if (matches.length === 1) {
-          // Only one match → autocomplete it
-          setInput(matches[0]);
-        } else if (matches.length > 1) {
-          // Multiple matches → show below (like bash)
-          if (window.lastTabPress && Date.now() - window.lastTabPress < 500) {
-            // Second quick Tab → list suggestions
-            setLines((prev) => [
-              ...prev,
-              `\n${matches.join("   ")}\n`
-            ]);
-          }
-          window.lastTabPress = Date.now();
-        }
-      }
-    }}
-    className="flex items-center"
-  >
-    <span className="text-blue-400 mr-2">shigi@portfolio:~$</span>
-
-    <div className="relative flex-1 flex items-center">
-      <input
-        type="text"
-        className="bg-transparent flex-1 outline-none text-green-400 placeholder-gray-600"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Type a command..."
-        autoFocus
-      />
-
-      {/* === Ghost suggestion (only for single-match) === */}
-      {input && (
-        <span className="absolute left-0 text-green-600 opacity-30 pointer-events-none select-none">
-          {
-            (() => {
+            // TAB Autocomplete
+            if (e.key === "Tab") {
+              e.preventDefault();
               const matches = Object.keys(commands).filter((cmd) =>
                 cmd.startsWith(input.toLowerCase())
               );
-              return matches.length === 1 ? matches[0] : "";
-            })()
-          }
-        </span>
+              if (matches.length === 1) {
+                setInput(matches[0]);
+              } else if (matches.length > 1) {
+                if (window.lastTabPress && Date.now() - window.lastTabPress < 500) {
+                  setLines((prev) => {
+                    const next = [...prev, `\n${matches.join("   ")}\n`];
+                    requestAnimationFrame(() => scrollToBottom(true));
+                    return next;
+                  });
+                }
+                window.lastTabPress = Date.now();
+              }
+            }
+          }}
+          className="flex items-center"
+        >
+          <span className="text-blue-400 mr-2">shigi@portfolio:~$</span>
+          <div className="relative flex-1 flex items-center">
+            <input
+              type="text"
+              className="bg-transparent flex-1 outline-none text-green-400 placeholder-gray-600"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a command..."
+              autoFocus
+            />
+          </div>
+        </form>
       )}
-    </div>
-  </form>
-)}
     </motion.div>
   );
 }

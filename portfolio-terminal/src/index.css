@@ -7,8 +7,21 @@ html, body {
   background-color: #000;
   color: #00ff99;
   font-family: "Fira Code", monospace;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
+/* --- Viewport Height Fix for Mobile Chrome --- */
+:root {
+  --vh: 100%;
+}
+
+@media (max-width: 768px) {
+  :root {
+    /* dynamically calculated in JS below */
+    --vh: 100%;
+  }
+}
 @keyframes blink {
   50% {
     opacity: 0;
