@@ -289,20 +289,65 @@ const handleResumeDownload = () => {
         />
       )}
 
-      {showPrompt && !isTyping && (
-        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex items-center">
-          <span className="text-blue-400 mr-2">shigi@portfolio:~$</span>
-          <input
-            type="text"
-            className="bg-transparent flex-1 outline-none text-green-400 placeholder-gray-600"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a command..."
-            autoFocus
-          />
-          <span className="border-r-4 border-green-400 animate-blink ml-1"></span>
-        </form>
+{showPrompt && !isTyping && (
+  <form
+    onSubmit={handleSubmit}
+    onKeyDown={(e) => {
+      handleKeyDown(e);
+
+      // === TAB Autocomplete (Bash-like) ===
+      if (e.key === "Tab") {
+        e.preventDefault(); // prevent browser focus change
+        const matches = Object.keys(commands).filter((cmd) =>
+          cmd.startsWith(input.toLowerCase())
+        );
+
+        if (matches.length === 1) {
+          // Only one match → autocomplete it
+          setInput(matches[0]);
+        } else if (matches.length > 1) {
+          // Multiple matches → show below (like bash)
+          if (window.lastTabPress && Date.now() - window.lastTabPress < 500) {
+            // Second quick Tab → list suggestions
+            setLines((prev) => [
+              ...prev,
+              `\n${matches.join("   ")}\n`
+            ]);
+          }
+          window.lastTabPress = Date.now();
+        }
+      }
+    }}
+    className="flex items-center"
+  >
+    <span className="text-blue-400 mr-2">shigi@portfolio:~$</span>
+
+    <div className="relative flex-1 flex items-center">
+      <input
+        type="text"
+        className="bg-transparent flex-1 outline-none text-green-400 placeholder-gray-600"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Type a command..."
+        autoFocus
+      />
+
+      {/* === Ghost suggestion (only for single-match) === */}
+      {input && (
+        <span className="absolute left-0 text-green-600 opacity-30 pointer-events-none select-none">
+          {
+            (() => {
+              const matches = Object.keys(commands).filter((cmd) =>
+                cmd.startsWith(input.toLowerCase())
+              );
+              return matches.length === 1 ? matches[0] : "";
+            })()
+          }
+        </span>
       )}
+    </div>
+  </form>
+)}
     </motion.div>
   );
 }

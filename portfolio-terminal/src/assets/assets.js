@@ -22,8 +22,7 @@ export const terminalData = {
     },
     {
       title: "Portfolio Website",
-      demo: "https://yourportfolio.com",
-      github: "https://github.com/yourname/portfolio",
+      demo: "https://shigiportfolio.vercel.app",
     },
   ],
 
