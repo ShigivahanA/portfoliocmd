@@ -15,6 +15,7 @@ export default function Terminal({ onCommand }) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const typingRef = useRef(null);
   const [tabPressed, setTabPressed] = useState(false);
+  const typingAudioRef = useRef(null);
 
   // === Helper: scroll instantly or smoothly to bottom ===
   const scrollToBottom = (smooth = false) => {
@@ -24,7 +25,6 @@ export default function Terminal({ onCommand }) {
       try {
         container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
       } catch {
-        // fallback
         container.scrollTop = container.scrollHeight;
       }
     } else {
@@ -33,34 +33,24 @@ export default function Terminal({ onCommand }) {
   };
 
   // === Utility: Format URLs ===
-
-const formatText = (text) => {
-  const urlRegex =
-    /\b((?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,;!?)]*)/gi;
-
-  return text.replace(urlRegex, (url) => {
-    let href = url.startsWith("http") ? url : "https://" + url;
-    return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-400 underline">Link</a>`;
-  });
-};
-
-
-
+  const formatText = (text) => {
+    const urlRegex =
+      /\b((?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,;!?)]*)/gi;
+    return text.replace(urlRegex, (url) => {
+      let href = url.startsWith("http") ? url : "https://" + url;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-400 underline">Link</a>`;
+    });
+  };
 
   // === Command Lists ===
-const projectList = projects
-  .map(
-    (p, i) =>
-      `${i + 1}. ${p.title}${
-        p.demo
-          ? ` - ${p.demo}`
-          : p.github
-          ? ` - ${p.github}`
-          : ""
-      }`
-  )
-  .join("\n");
-
+  const projectList = projects
+    .map(
+      (p, i) =>
+        `${i + 1}. ${p.title}${
+          p.demo ? ` - ${p.demo}` : p.github ? ` - ${p.github}` : ""
+        }`
+    )
+    .join("\n");
 
   const certificateList = certificates
     .map((c, i) => `${i + 1}. ${c.title}${c.link ? ` - ${c.link}` : ""}`)
@@ -97,15 +87,12 @@ const projectList = projects
   // === Handle Resume Command ===
   const handleResumeDownload = () => {
     const resumeURL = "/Shigivahan_Resume.pdf";
-
     const promptLine = `<span class='text-blue-400'>shigi@portfolio:~$</span> <span class='text-green-400'>resume</span>`;
     setLines((prev) => {
       const next = [...prev, promptLine, "Downloading resume.pdf ..."];
       requestAnimationFrame(() => scrollToBottom(true));
       return next;
     });
-
-    // Fake countdown
     let countdown = 3;
     const countdownInterval = setInterval(() => {
       setLines((prev) => {
@@ -116,8 +103,6 @@ const projectList = projects
       countdown--;
       if (countdown === 0) {
         clearInterval(countdownInterval);
-
-        // === Start fake progress bar ===
         let progress = 0;
         const totalSteps = 20;
         const progressInterval = setInterval(() => {
@@ -132,22 +117,16 @@ const projectList = projects
             requestAnimationFrame(() => scrollToBottom(true));
             return next;
           });
-
           if (progress >= totalSteps) {
             clearInterval(progressInterval);
-
-            // Trigger actual download
             const link = document.createElement("a");
             link.href = resumeURL;
             link.download = "Shigivahan_Resume.pdf";
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-
-            // Fake stats
             const fileSize = (Math.random() * 1.5 + 1.5).toFixed(2);
             const duration = (Math.random() * 1.2 + 0.8).toFixed(2);
-
             setTimeout(() => {
               setLines((prev) => {
                 const next = [
@@ -168,30 +147,24 @@ const projectList = projects
   // === Handle Commands ===
   const handleCommand = (cmd) => {
     const lower = cmd.toLowerCase();
-
-    // Notify parent (for PreviewPanel)
     if (["projects", "certifications"].includes(lower)) {
       onCommand?.(lower);
     } else {
       onCommand?.(null);
     }
-
     if (lower === "resume") {
       setShowPrompt(false);
       handleResumeDownload();
       return;
     }
-
     if (lower === "clear") {
       setLines([]);
       setHistory([...history, cmd]);
       setHistoryIndex(-1);
       onCommand?.(null);
-      // ensure we keep prompt visible
       requestAnimationFrame(() => scrollToBottom(true));
       return;
     }
-
     const output = commands[lower] || `Command not found: ${cmd}`;
     const promptLine = `<span class='text-blue-400'>shigi@portfolio:~$</span> <span class='text-green-400'>${cmd}</span>`;
     setLines((prev) => {
@@ -204,7 +177,7 @@ const projectList = projects
     startTyping(output);
   };
 
-  // === Typing logic ===
+  // === Typing logic with sound ===
   const startTyping = (text) => {
     const linesArray = text.split("\n");
     setFullLines(linesArray);
@@ -217,54 +190,53 @@ const projectList = projects
   useEffect(() => {
     if (!isTyping || fullLines.length === 0) return;
 
+    // 🎧 Play looping typing sound once
+    if (!typingAudioRef.current) {
+      const sound = new Audio("/sounds/typing.mp3");
+      sound.volume = 0.50;
+      sound.loop = true;
+      sound.play().catch(() => {});
+      typingAudioRef.current = sound;
+    }
+
     let line = fullLines[currentLineIndex];
     let index = 0;
     let current = "";
-
-    // Clear existing interval if any
     if (typingRef.current) clearInterval(typingRef.current);
 
     typingRef.current = setInterval(() => {
-      // Add next char
       current += line.charAt(index);
       setTypedText(current);
-
-      // scroll immediately (sync with painting)
       requestAnimationFrame(() => scrollToBottom(false));
-
       index++;
-
-      // end of line
       if (index >= line.length) {
         clearInterval(typingRef.current);
         typingRef.current = null;
-
-        // push the fully-typed line into lines
         setLines((prev) => {
           const next = [...prev, current];
-          // format link after a small delay (keeps typing effect fluid)
           setTimeout(() => {
             const formatted = formatText(current);
             setLines((prev2) => {
               const updated = [...prev2];
               updated[updated.length - 1] = formatted;
-              // ensure we scroll after format
               requestAnimationFrame(() => scrollToBottom(true));
               return updated;
             });
           }, 200);
-
-          // scroll right away after adding the raw line
           requestAnimationFrame(() => scrollToBottom(true));
           return next;
         });
-
-        // move to next line or finish
         setTimeout(() => {
           if (currentLineIndex < fullLines.length - 1) {
             setTypedText("");
             setCurrentLineIndex((i) => i + 1);
           } else {
+            // 🛑 Stop typing sound when done
+            if (typingAudioRef.current) {
+              typingAudioRef.current.pause();
+              typingAudioRef.current.currentTime = 0;
+              typingAudioRef.current = null;
+            }
             setIsTyping(false);
             setTypedText("");
             setFullLines([]);
@@ -285,6 +257,12 @@ const projectList = projects
         if (isTyping) {
           clearInterval(typingRef.current);
           typingRef.current = null;
+          // 🛑 Stop sound
+          if (typingAudioRef.current) {
+            typingAudioRef.current.pause();
+            typingAudioRef.current.currentTime = 0;
+            typingAudioRef.current = null;
+          }
           setIsTyping(false);
           setTypedText("");
           setFullLines([]);
@@ -302,7 +280,6 @@ const projectList = projects
         }
       }
     };
-
     window.addEventListener("keydown", handleCtrlC);
     return () => window.removeEventListener("keydown", handleCtrlC);
   }, [isTyping]);
@@ -336,7 +313,6 @@ const projectList = projects
     }
   };
 
-  // === Ensure container is visible on mount / whenever lines change (fallback) ===
   useEffect(() => {
     scrollToBottom(true);
   }, [lines.length]);
@@ -348,10 +324,7 @@ const projectList = projects
                  text-[13.5px] sm:text-[14px] md:text-[16px]
                  overflow-x-hidden select-text
                  [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-      style={{
-        whiteSpace: "pre-wrap",
-        WebkitOverflowScrolling: "touch", // helps iOS momentum
-      }}
+      style={{ whiteSpace: "pre-wrap", WebkitOverflowScrolling: "touch" }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
@@ -360,41 +333,29 @@ const projectList = projects
         <p
           key={i}
           className="text-white mb-1 leading-relaxed break-words whitespace-pre-wrap"
-          style={{
-            wordWrap: "break-word",
-            overflowWrap: "anywhere",
-          }}
+          style={{ wordWrap: "break-word", overflowWrap: "anywhere" }}
           dangerouslySetInnerHTML={{ __html: line }}
         />
       ))}
-
       {isTyping && typedText && !lines.includes(typedText) && (
         <p
           className="text-white mb-1 leading-relaxed break-words whitespace-pre-wrap"
-          style={{
-            wordWrap: "break-word",
-            overflowWrap: "anywhere",
-          }}
+          style={{ wordWrap: "break-word", overflowWrap: "anywhere" }}
           dangerouslySetInnerHTML={{ __html: typedText }}
         />
       )}
-
       {showPrompt && !isTyping && (
         <form
           onSubmit={handleSubmit}
           onKeyDown={(e) => {
-            // history navigation handled separately
             handleKeyDown(e);
-
-            // TAB Autocomplete
             if (e.key === "Tab") {
               e.preventDefault();
               const matches = Object.keys(commands).filter((cmd) =>
                 cmd.startsWith(input.toLowerCase())
               );
-              if (matches.length === 1) {
-                setInput(matches[0]);
-              } else if (matches.length > 1) {
+              if (matches.length === 1) setInput(matches[0]);
+              else if (matches.length > 1) {
                 if (window.lastTabPress && Date.now() - window.lastTabPress < 500) {
                   setLines((prev) => {
                     const next = [...prev, `\n${matches.join("   ")}\n`];
@@ -416,14 +377,12 @@ const projectList = projects
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
-                setTabPressed(false); // 👈 typing again re-enables the hint
+                setTabPressed(false);
               }}
               placeholder="Type a command..."
               autoFocus
               spellCheck={false}
             />
-
-            {/* Ghost autocompletion hint (only before pressing Tab) */}
             {!tabPressed && input && (
               <span
                 className="absolute left-0 text-green-600 opacity-30 pointer-events-none select-none whitespace-pre z-0"
