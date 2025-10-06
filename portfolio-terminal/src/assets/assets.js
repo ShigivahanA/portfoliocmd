@@ -11,8 +11,8 @@ import keras from "./keras.webp";
 import oci from "./oci.webp";
 import glioma from "./glioma.webp";
 import streamlit from "./streamlit.webp";
-import dataviz from "./dataviz.webp";
-import canva from "./canva.webp";
+import flav from './flav.webp'
+import datapaper from './datapaper.jpg'
 
 // --- PROJECTS ---
 export const projects = [
@@ -66,7 +66,7 @@ export const certificates = [
     title: "Oracle Cloud Infrastructure Foundations",
     image: oci,
     issuer: "Oracle",
-    link: "https://www.credly.com/badges/oci-foundations", // example optional
+    link: null, 
   },
   {
     title: "Ensemble Learning for Glioma Grading",
@@ -75,16 +75,16 @@ export const certificates = [
     link: "https://ieeexplore.ieee.org/document/11140897",
   },
   {
-    title: "Data Visualization using Plotly",
-    image: dataviz,
-    issuer: "Coursera",
-    link: "https://coursera.org/verify/J8FKDYCDLW28",
+    title: "DVA for Price Elasticity on Commodities",
+    image: datapaper,
+    issuer: "IEE ICDSAAI 2023",
+    link: "https://ieeexplore.ieee.org/document/10452435",
   },
-  {
-    title: "Design a Pitch Deck with Canva",
-    image: canva,
-    issuer: "Coursera",
-    link: "https://coursera.org/verify/Z7NUMGLN748E",
+    {
+    title: "Production through Demand Forecasting using ML",
+    image: flav,
+    issuer: "ICRDICCT 2025",
+    link: "https://coursera.org/verify/J8FKDYCDLW28",
   },
   {
     title: "Build Data Apps with Streamlit",

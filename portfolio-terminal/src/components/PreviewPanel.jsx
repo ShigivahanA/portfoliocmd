@@ -28,7 +28,7 @@ export default function PreviewPanel({ activeSection }) {
       {activeSection === "projects" && previewItems.length > 0 && (
         <>
           <p className="text-blue-400 text-lg mb-3 font-mono">
-            🔧 Project Previews
+            Project Previews
           </p>
           <div className="grid grid-cols-2 gap-3">
             {previewItems.map((proj, idx) => {
@@ -80,7 +80,7 @@ export default function PreviewPanel({ activeSection }) {
       {activeSection === "certifications" && previewItems.length > 0 && (
         <>
           <p className="text-blue-400 text-lg mb-3 font-mono">
-            🏅 Certificate Previews
+            Certificate Previews
           </p>
           <div className="grid grid-cols-2 gap-3">
             {previewItems.map((cert, idx) => (

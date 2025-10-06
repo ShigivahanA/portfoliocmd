@@ -14,6 +14,7 @@ export default function Terminal({ onCommand }) {
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const typingRef = useRef(null);
+  const [tabPressed, setTabPressed] = useState(false);
 
   // === Helper: scroll instantly or smoothly to bottom ===
   const scrollToBottom = (smooth = false) => {
@@ -32,11 +33,8 @@ export default function Terminal({ onCommand }) {
   };
 
   // === Utility: Format URLs ===
-// === Utility: Format URLs ===
-// === Utility: Format URLs and replace them with "Link" ===
-// === Utility: Format URLs and replace them with "Link" ===
+
 const formatText = (text) => {
-  // Match only full valid URLs starting with http(s) or www
   const urlRegex =
     /\b((?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,;!?)]*)/gi;
 
@@ -82,14 +80,14 @@ const projectList = projects
       "Built and deployed production-level web apps integrating AI and analytics. Experienced in full-stack (MERN) and ML-based interfaces.",
     education:
       "Education:\n\
-1. Kalasalingam Academy of Research and Education — B.Tech in Computer Science (Aug 2021 – Jun 2025)\n\
-• Cumulative GPA: 8.37\n\n\
-2. Nxtwave Disruptive Technologies (Jun 2022 – Present)\n\
-• Industry Ready Certification in Full-Stack Development\n\n\
-3. Sakthi Vinayakar Hindu Vidyalaya — Intermediate (Jun 2020 – Apr 2021)\n\
-• Percentage: 80.4\n\n\
-4. Good Shepherd Model School — Secondary (Jun 2018 – Apr 2019)\n\
-• Percentage: 85.7",
+      1. Kalasalingam Academy of Research and Education — B.Tech in Computer Science (Aug 2021 – Jun 2025)\n\
+      • Cumulative GPA: 8.37\n\n\
+      2. Nxtwave Disruptive Technologies (Jun 2022 – Present)\n\
+      • Industry Ready Certification in Full-Stack Development\n\n\
+      3. Sakthi Vinayakar Hindu Vidyalaya — Intermediate (Jun 2020 – Apr 2021)\n\
+      • Percentage: 80.4\n\n\
+      4. Good Shepherd Model School — Secondary (Jun 2018 – Apr 2019)\n\
+      • Percentage: 85.7",
     certifications: certificateList,
     contact:
       "📫 Get In Touch:\n\n \n\nEmail: shigivahanathithan@gmail.com\nPhone: +91 93447-18155\nGitHub: [https://github.com/ShigivahanA]\nLinkedIn: [https://linkedin.com/in/shigivahana]\n\n \n\nFeel free to reach out!",
@@ -103,7 +101,6 @@ const projectList = projects
     const promptLine = `<span class='text-blue-400'>shigi@portfolio:~$</span> <span class='text-green-400'>resume</span>`;
     setLines((prev) => {
       const next = [...prev, promptLine, "Downloading resume.pdf ..."];
-      // ensure we scroll after pushing lines
       requestAnimationFrame(() => scrollToBottom(true));
       return next;
     });
@@ -415,12 +412,33 @@ const projectList = projects
           <div className="relative flex-1 flex items-center">
             <input
               type="text"
-              className="bg-transparent flex-1 outline-none text-green-400 placeholder-gray-600"
+              className="bg-transparent flex-1 outline-none text-green-400 placeholder-gray-600 relative z-10"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                setTabPressed(false); // 👈 typing again re-enables the hint
+              }}
               placeholder="Type a command..."
               autoFocus
+              spellCheck={false}
             />
+
+            {/* Ghost autocompletion hint (only before pressing Tab) */}
+            {!tabPressed && input && (
+              <span
+                className="absolute left-0 text-green-600 opacity-30 pointer-events-none select-none whitespace-pre z-0"
+                style={{ paddingLeft: "2px" }}
+              >
+                {
+                  (() => {
+                    const matches = Object.keys(commands).filter((cmd) =>
+                      cmd.startsWith(input.toLowerCase())
+                    );
+                    return matches.length === 1 ? matches[0] : "";
+                  })()
+                }
+              </span>
+            )}
           </div>
         </form>
       )}
