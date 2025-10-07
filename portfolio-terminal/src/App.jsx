@@ -27,9 +27,9 @@ function LoadingScreen({ onDone }) {
     }, 60);
     timers.push(t1);
 
-    // Step 2: fake dir flood
+    // Step 2: fake directory flood
     const fakeDirs = Array.from({ length: 200 }, (_, idx) =>
-      `C:\\Users\\Shigi\\Documents\\project\\file_${idx
+      `C:\\Users\\Shigi\\Documents\\portfolio\\file_${idx
         .toString()
         .padStart(3, "0")}.js`
     );
@@ -118,7 +118,7 @@ function LoadingScreen({ onDone }) {
 // === MAIN APP ===
 export default function App() {
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState(null); // ✅ FIXED
+  const [activeSection, setActiveSection] = useState(null);
 
   // ✅ Fix viewport height for mobile Chrome
   useEffect(() => {
@@ -158,24 +158,46 @@ export default function App() {
 
             {/* === MAIN === */}
             <main className="flex-1 flex flex-col md:flex-row justify-between items-start gap-6 md:gap-10 border-x border-green-700 border-b rounded-b-lg p-4 md:p-6 overflow-hidden">
-              {/* === LEFT PANEL === */}
-              <div className="hidden md:flex flex-col items-center justify-center w-1/3 shrink-0 space-y-3">
-                <PreviewPanel activeSection={activeSection} /> {/* ✅ FIXED */}
-              </div>
+              {/* === LEFT PANEL (PreviewPanel) === */}
+              <div className="hidden md:flex flex-col items-center justify-center w-1/3 shrink-0 space-y-3 min-h-0 h-full">
+  <PreviewPanel activeSection={activeSection} />
+</div>
 
-              {/* === TERMINAL === */}
+
+              {/* === TERMINAL (Right Panel) === */}
               <div className="w-full md:w-2/3 flex flex-col md:border-l border-green-700 md:pl-6 h-full">
-                <div className="text-xs text-green-400 pb-1 mb-3 flex flex-wrap gap-x-2 shrink-0">
-                  <span className="text-blue-400">help</span> |
-                  <span>about</span> | <span>projects</span> | <span>skills</span> |
-                  <span>experience</span> | <span>contact</span> |{" "}
-                  <span>education</span> | <span>resume</span> |{" "}
-                  <span>certifications</span> | <span>sudo</span> |{" "}
-                  <span>clear</span>
-                </div>
-                <div className="flex-1 min-h-0">
-                  {/* ✅ Now properly updates preview */}
-                  <Terminal onCommand={(section) => setActiveSection(section)} />
+                {/* GLOBAL COMMANDS (Visible on Desktop) */}
+<div className="text-xs text-green-400 pb-1 mb-3 flex flex-wrap gap-x-2 gap-y-1 shrink-0 justify-start items-center w-full">
+  {/* Desktop: show global commands */}
+  <div className="hidden md:flex flex-wrap gap-x-2">
+    <span className="text-blue-400">help</span> |
+    <span>about</span> | <span>skills</span> | <span>experience</span> |{" "}
+    <span>education</span> | <span>contact</span> |{" "}
+    <span>resume</span> | <span>clear</span>
+  </div>
+
+  {/* Mobile: show all commands in compact format */}
+  <div className="flex md:hidden flex-wrap gap-x-2 gap-y-1 text-[11px] sm:text-[12px] leading-relaxed">
+    <span className="text-green-300">cd projects</span> |
+    <span className="text-green-300">cd certifications</span> | <span>cd ..</span> |
+    <span>ls</span> | <span>show prj 1</span> | <span>show cert 1</span> |
+    <span>open 1</span> |
+    <span>verify 1</span> |
+    <span className="text-blue-400">help</span> |
+    <span>about</span> | <span>skills</span> | <span>experience</span> |
+    <span>education</span> | <span>contact</span> |
+    <span>resume</span> | <span>clear</span>
+  </div>
+</div>
+
+
+                {/* Terminal + Live Preview for Mobile */}
+                <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden">
+                  <Terminal onCommand={setActiveSection} />
+<div className="md:hidden min-h-0 h-[300px] flex-1">
+  <PreviewPanel activeSection={activeSection} />
+</div>
+
                 </div>
               </div>
             </main>
