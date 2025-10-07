@@ -178,12 +178,8 @@ export default function App() {
 
   {/* Mobile: show all commands in compact format */}
   <div className="flex md:hidden flex-wrap gap-x-2 gap-y-1 text-[11px] sm:text-[12px] leading-relaxed">
-    <span className="text-green-300">cd projects</span> |
+    <span className="text-blue-400">help</span> | <span className="text-green-300">cd projects</span> |
     <span className="text-green-300">cd certifications</span> | <span>cd ..</span> |
-    <span>ls</span> | <span>show prj 1</span> | <span>show cert 1</span> |
-    <span>open 1</span> |
-    <span>verify 1</span> |
-    <span className="text-blue-400">help</span> |
     <span>about</span> | <span>skills</span> | <span>experience</span> |
     <span>education</span> | <span>contact</span> |
     <span>resume</span> | <span>clear</span>
